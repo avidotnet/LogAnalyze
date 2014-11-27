@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace LogAnalyze
+namespace ConsoleApplication1
 {
     class Program
     {
@@ -25,47 +25,51 @@ namespace LogAnalyze
             {
                 string[] logEntries = log.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                DateTime entryDate = Convert.ToDateTime(logEntries[0].Trim(), System.Globalization.CultureInfo.InvariantCulture);
+                //DateTime entryDate = Convert.ToDateTime(logEntries[0].Trim(), System.Globalization.CultureInfo.InvariantCulture);
                 string entryMethod = logEntries[3].Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries)[1].Trim();
                 string entryAPI = logEntries[4].Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries)[1].Trim();
-                string entryHost = logEntries[5].Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries)[1].Trim();
-                string entryIP = logEntries[6].Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries)[1].Trim().TrimStart(new char[] { '"' }).TrimEnd(new char[] { '"' });
+                //string entryHost = logEntries[5].Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries)[1].Trim();
+                //string entryIP = logEntries[6].Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries)[1].Trim().TrimStart(new char[] { '"' }).TrimEnd(new char[] { '"' });
                 string entryDyno = logEntries[7].Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries)[1].Trim();
-                string entryConnect = logEntries[8].Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries)[1].Trim().TrimEnd(new char[] { 'm', 's' });
-                string entryService = logEntries[9].Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries)[1].Trim().TrimEnd(new char[] { 'm', 's' });
-                int entryResponse = Convert.ToInt32(entryConnect) + Convert.ToInt32(entryService);
-
-                //bool match = WildCardCompare("/api/online/platforms/facebook_canvas/users/*/add_ticket", entryAPI);
+                string entryConnectTime = logEntries[8].Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries)[1].Trim().TrimEnd(new char[] { 'm', 's' });
+                string entryServiceTime = logEntries[9].Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries)[1].Trim().TrimEnd(new char[] { 'm', 's' });
+                int entryResponseTime = Convert.ToInt32(entryConnectTime) + Convert.ToInt32(entryServiceTime);
 
                 if (WildCardCompare(GET_count_pending_messages.api, entryAPI) && entryMethod == GET_count_pending_messages.method)
                 {
                     GET_count_pending_messages.calls++;
-                    GET_count_pending_messages.responseTimes.Add(entryResponse);
+                    GET_count_pending_messages.dyno.Add(entryDyno);
+                    GET_count_pending_messages.responseTimes.Add(entryResponseTime);
                 }
                 else if (WildCardCompare(GET_get_messages.api, entryAPI) && entryMethod == GET_get_messages.method)
                 {
                     GET_get_messages.calls++;
-                    GET_get_messages.responseTimes.Add(entryResponse);
+                    GET_get_messages.dyno.Add(entryDyno);
+                    GET_get_messages.responseTimes.Add(entryResponseTime);
                 }
                 else if (WildCardCompare(GET_get_friends_progress.api, entryAPI) && entryMethod == GET_get_friends_progress.method)
                 {
                     GET_get_friends_progress.calls++;
-                    GET_get_friends_progress.responseTimes.Add(entryResponse);
+                    GET_get_friends_progress.dyno.Add(entryDyno);
+                    GET_get_friends_progress.responseTimes.Add(entryResponseTime);
                 }
                 else if (WildCardCompare(GET_get_friends_score.api, entryAPI) && entryMethod == GET_get_friends_score.method)
                 {
                     GET_get_friends_score.calls++;
-                    GET_get_friends_score.responseTimes.Add(entryResponse);
+                    GET_get_friends_score.dyno.Add(entryDyno);
+                    GET_get_friends_score.responseTimes.Add(entryResponseTime);
                 }
                 else if (WildCardCompare(GET_users.api, entryAPI) && entryMethod == GET_users.method)
                 {
                     GET_users.calls++;
-                    GET_users.responseTimes.Add(entryResponse);
+                    GET_users.dyno.Add(entryDyno);
+                    GET_users.responseTimes.Add(entryResponseTime);
                 }
                 else if (WildCardCompare(POST_users.api, entryAPI) && entryMethod == POST_users.method)
                 {
                     POST_users.calls++;
-                    POST_users.responseTimes.Add(entryResponse);
+                    POST_users.dyno.Add(entryDyno);
+                    POST_users.responseTimes.Add(entryResponseTime);
                 }
             }
 
@@ -76,6 +80,55 @@ namespace LogAnalyze
             GET_users.Calculate();
             POST_users.Calculate();
 
+            string output = GET_count_pending_messages.api +
+                    "\nTotal Calls: " + GET_count_pending_messages.calls +
+                    "\nResponse Time Mean: " + GET_count_pending_messages.responseMean +
+                    "\nResponse Time Median: " + GET_count_pending_messages.responseMedian +
+                    "\nResponse Time Mode: " + GET_count_pending_messages.responseMode +
+                    "\ndyno that responded the most: " + GET_count_pending_messages.mostActiveDyno + "\n\n" +
+                    GET_get_messages.api +
+                    "\nTotal Calls: " + GET_get_messages.calls +
+                    "\nResponse Time Mean: " + GET_get_messages.responseMean +
+                    "\nResponse Time Median: " + GET_get_messages.responseMedian +
+                    "\nResponse Time Mode: " + GET_get_messages.responseMode +
+                    "\ndyno that responded the most: " + GET_get_messages.mostActiveDyno + "\n\n" +
+                    GET_get_friends_progress.api +
+                    "\nTotal Calls: " + GET_get_friends_progress.calls +
+                    "\nResponse Time Mean: " + GET_get_friends_progress.responseMean +
+                    "\nResponse Time Median: " + GET_get_friends_progress.responseMedian +
+                    "\nResponse Time Mode: " + GET_get_friends_progress.responseMode +
+                    "\ndyno that responded the most: " + GET_get_friends_progress.mostActiveDyno + "\n\n" +
+                    GET_get_friends_score.api +
+                    "\nTotal Calls: " + GET_get_friends_score.calls +
+                    "\nResponse Time Mean: " + GET_get_friends_score.responseMean +
+                    "\nResponse Time Median: " + GET_get_friends_score.responseMedian +
+                    "\nResponse Time Mode: " + GET_get_friends_score.responseMode +
+                    "\ndyno that responded the most: " + GET_get_friends_score.mostActiveDyno + "\n\n" +
+                    GET_users.api +
+                    "\nTotal Calls: " + GET_users.calls +
+                    "\nResponse Time Mean: " + GET_users.responseMean +
+                    "\nResponse Time Median: " + GET_users.responseMedian +
+                    "\nResponse Time Mode: " + GET_users.responseMode +
+                    "\ndyno that responded the most: " + GET_users.mostActiveDyno + "\n\n" +
+                    POST_users.api +
+                    "\nTotal Calls: " + POST_users.calls +
+                    "\nResponse Time Mean: " + POST_users.responseMean +
+                    "\nResponse Time Median: " + POST_users.responseMedian +
+                    "\nResponse Time Mode: " + POST_users.responseMode +
+                    "\ndyno that responded the most: " + POST_users.mostActiveDyno + "\n\n";
+            
+            Console.WriteLine("\n" + output);
+
+            Console.Write("Enter Y to save output in text file, or N to exit (Y/N): ");
+            if (Console.ReadKey().KeyChar.ToString().ToUpper() == "Y")
+            {
+                FileStream outputFile = File.Create("D:\\Log_Analysis_Report_" + DateTime.Now.ToString("ddMMyyyy_hhmmss", System.Globalization.CultureInfo.InvariantCulture) + ".txt");
+                byte[] outputBytes = Encoding.UTF8.GetBytes(output);
+                outputFile.Write(outputBytes,0, outputBytes.Length);
+                Console.WriteLine("\nFile saved in " + outputFile.Name);
+                Console.WriteLine("Press any key to exit.");
+                Console.ReadKey();
+            }
         }
 
         public static bool WildCardCompare(string pattern, string text, bool caseSensitive = false)
@@ -95,10 +148,12 @@ namespace LogAnalyze
         public string method = "GET";
         public string api;
         public int calls = 0;
+        public List<string> dyno = new List<string>();
         public List<int> responseTimes = new List<int>();
         public float responseMean = 0;
         public float responseMedian = 0;
         public int responseMode;
+        public string mostActiveDyno;
 
         public void Calculate()
         {
@@ -106,6 +161,7 @@ namespace LogAnalyze
             this.responseMean = CalculateMean(times);
             this.responseMedian = CalculateMedian(times);
             this.responseMode = CalculateMode(times);
+            this.mostActiveDyno = GetMostActiveDyno(this.dyno.ToArray());
         }
 
         public static int[] BubbleSort(int[] arr)
@@ -175,5 +231,36 @@ namespace LogAnalyze
 
             return mode[k, 1];
         }
+        
+        public static string GetMostActiveDyno(string[] arr)
+        {
+            Dictionary<string, int> dict = new Dictionary<string, int>(arr.Length);
+
+            foreach (string dyno in arr)
+            {
+                if (dict.ContainsKey(dyno))
+                {
+                    dict[dyno] += 1;
+                }
+                else
+                {
+                    dict.Add(dyno, 1);
+                }
+            }
+            
+            string mostActiveDyno = dict.OrderByDescending(key => key.Value).First().Key;
+
+            return mostActiveDyno;
+        }
     }
+
 }
+//mean(average), median, mode of the response time (connect + service)
+//dyno that responded the most
+
+//count_pending_message
+//get_messages
+//get_friends_progress
+//get_friends_score
+//post user
+//get user
