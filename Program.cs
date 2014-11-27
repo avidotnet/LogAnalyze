@@ -4,14 +4,40 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 
-namespace ConsoleApplication1
+namespace AnalyzeLog
 {
     class Program
     {
+        [STAThread]
         static void Main(string[] args)
         {
-            List<string> logs = File.ReadLines("D:\\log.txt", Encoding.UTF8).ToList<string>();
+            Console.Write("Browse for log file? (Y/N) ");
+            if (Console.ReadKey().KeyChar.ToString().ToUpper() == "Y")
+            {
+                OpenFileDialog dialog = new OpenFileDialog();
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    string logFile = dialog.FileName;
+                    Analyze obj = new Analyze(logFile);
+                }
+            }
+        }
+    }
+
+    internal class Analyze
+    {
+        private string logFile = string.Empty;
+        public Analyze(string file)
+        {
+            this.logFile = file;
+            RunAnalysis();
+        }
+
+        private void RunAnalysis()
+        {
+            List<string> logs = File.ReadLines(logFile, Encoding.UTF8).ToList<string>();
 
             APIcall GET_count_pending_messages = new APIcall { api = "/api/users/*/count_pending_messages" };
             APIcall GET_get_messages = new APIcall { api = "/api/users/*/get_messages" };
@@ -80,58 +106,62 @@ namespace ConsoleApplication1
             GET_users.Calculate();
             POST_users.Calculate();
 
-            string output = GET_count_pending_messages.api +
+            string output = "GET: " + GET_count_pending_messages.api +
                     "\nTotal Calls: " + GET_count_pending_messages.calls +
                     "\nResponse Time Mean: " + GET_count_pending_messages.responseMean +
                     "\nResponse Time Median: " + GET_count_pending_messages.responseMedian +
                     "\nResponse Time Mode: " + GET_count_pending_messages.responseMode +
                     "\ndyno that responded the most: " + GET_count_pending_messages.mostActiveDyno + "\n\n" +
-                    GET_get_messages.api +
+                    "GET: " + GET_get_messages.api +
                     "\nTotal Calls: " + GET_get_messages.calls +
                     "\nResponse Time Mean: " + GET_get_messages.responseMean +
                     "\nResponse Time Median: " + GET_get_messages.responseMedian +
                     "\nResponse Time Mode: " + GET_get_messages.responseMode +
                     "\ndyno that responded the most: " + GET_get_messages.mostActiveDyno + "\n\n" +
-                    GET_get_friends_progress.api +
+                    "GET: " + GET_get_friends_progress.api +
                     "\nTotal Calls: " + GET_get_friends_progress.calls +
                     "\nResponse Time Mean: " + GET_get_friends_progress.responseMean +
                     "\nResponse Time Median: " + GET_get_friends_progress.responseMedian +
                     "\nResponse Time Mode: " + GET_get_friends_progress.responseMode +
                     "\ndyno that responded the most: " + GET_get_friends_progress.mostActiveDyno + "\n\n" +
-                    GET_get_friends_score.api +
+                    "GET: " + GET_get_friends_score.api +
                     "\nTotal Calls: " + GET_get_friends_score.calls +
                     "\nResponse Time Mean: " + GET_get_friends_score.responseMean +
                     "\nResponse Time Median: " + GET_get_friends_score.responseMedian +
                     "\nResponse Time Mode: " + GET_get_friends_score.responseMode +
                     "\ndyno that responded the most: " + GET_get_friends_score.mostActiveDyno + "\n\n" +
-                    GET_users.api +
+                    "GET: " + GET_users.api +
                     "\nTotal Calls: " + GET_users.calls +
                     "\nResponse Time Mean: " + GET_users.responseMean +
                     "\nResponse Time Median: " + GET_users.responseMedian +
                     "\nResponse Time Mode: " + GET_users.responseMode +
                     "\ndyno that responded the most: " + GET_users.mostActiveDyno + "\n\n" +
-                    POST_users.api +
+                    "POST: " + POST_users.api +
                     "\nTotal Calls: " + POST_users.calls +
                     "\nResponse Time Mean: " + POST_users.responseMean +
                     "\nResponse Time Median: " + POST_users.responseMedian +
                     "\nResponse Time Mode: " + POST_users.responseMode +
                     "\ndyno that responded the most: " + POST_users.mostActiveDyno + "\n\n";
-            
+
             Console.WriteLine("\n" + output);
 
-            Console.Write("Enter Y to save output in text file, or N to exit (Y/N): ");
+            Console.Write("Save output in text file? (Y/N): ");
             if (Console.ReadKey().KeyChar.ToString().ToUpper() == "Y")
             {
-                FileStream outputFile = File.Create("D:\\Log_Analysis_Report_" + DateTime.Now.ToString("ddMMyyyy_hhmmss", System.Globalization.CultureInfo.InvariantCulture) + ".txt");
-                byte[] outputBytes = Encoding.UTF8.GetBytes(output);
-                outputFile.Write(outputBytes,0, outputBytes.Length);
-                Console.WriteLine("\nFile saved in " + outputFile.Name);
+                FolderBrowserDialog folder = new FolderBrowserDialog();
+                if (folder.ShowDialog() == DialogResult.OK)
+                {
+                    FileStream outputFile = File.Create(folder.SelectedPath + "\\Log_Analysis_Report_" + DateTime.Now.ToString("ddMMyyyy_hhmmss", System.Globalization.CultureInfo.InvariantCulture) + ".txt");
+                    byte[] outputBytes = Encoding.UTF8.GetBytes(output);
+                    outputFile.Write(outputBytes, 0, outputBytes.Length);
+                    Console.WriteLine("\nFile saved in " + outputFile.Name);
+                }
                 Console.WriteLine("Press any key to exit.");
                 Console.ReadKey();
             }
         }
 
-        public static bool WildCardCompare(string pattern, string text, bool caseSensitive = false)
+        private bool WildCardCompare(string pattern, string text, bool caseSensitive = false)
         {
             pattern = pattern.Replace(".", @"\.");
             pattern = pattern.Replace("?", ".");
@@ -140,7 +170,6 @@ namespace ConsoleApplication1
             pattern = pattern.Replace(" ", @"\s");
             return new Regex(pattern, caseSensitive ? RegexOptions.None : RegexOptions.IgnoreCase).IsMatch(text);
         }
-                
     }
 
     public class APIcall
@@ -231,7 +260,7 @@ namespace ConsoleApplication1
 
             return mode[k, 1];
         }
-        
+
         public static string GetMostActiveDyno(string[] arr)
         {
             Dictionary<string, int> dict = new Dictionary<string, int>(arr.Length);
@@ -247,7 +276,7 @@ namespace ConsoleApplication1
                     dict.Add(dyno, 1);
                 }
             }
-            
+
             string mostActiveDyno = dict.OrderByDescending(key => key.Value).First().Key;
 
             return mostActiveDyno;
@@ -255,12 +284,3 @@ namespace ConsoleApplication1
     }
 
 }
-//mean(average), median, mode of the response time (connect + service)
-//dyno that responded the most
-
-//count_pending_message
-//get_messages
-//get_friends_progress
-//get_friends_score
-//post user
-//get user
